@@ -4,9 +4,9 @@
   "main": "dist/server.js",
   "type": "module",
   "scripts": {
-  "dev": "tsx watch src/server.ts",
-  "build": "tsc",
-  "start": "node dist/server.js"
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js"
   },
   "keywords": [],
   "author": "",
@@ -33,13 +33,11 @@
     "tsx": "^4.23.15",
     "typescript": "^5.9.3"
   },
-
   "overrides": {
     "@prisma/config": {
       "effect": "3.22.1"
     }
   },
-  
   "allowScripts": {
     "bcrypt@6.0.0": true,
     "prisma@7.10.1": true,
