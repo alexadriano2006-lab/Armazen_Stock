@@ -8,16 +8,8 @@ export const createUserSchema = z.object({
 });
 
 
-export const updateUserSchema = createUserSchema
-  .partial()
-  .transform((obj) =>
-    Object.fromEntries(Object.entries(obj).filter(([_, value]) => value !== undefined))
-  )
-  .refine((data) => Object.keys(data).length > 0, {
-    message: "Informe ao menos um campo para atualização.",
-  });
+export const updateUserSchema = createUserSchema.partial();
 
-  
 export type CreateUserInput = z.infer<typeof createUserSchema>
 
 export type UpdateUserInput = z.infer<typeof updateUserSchema>
