@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -11,6 +6,8 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+// --- ENUMS EXISTENTES ---
 
 enum Role {
   ADMIN
@@ -22,6 +19,31 @@ enum RegistrationSource {
   ADMIN
 }
 
+// --- NOVOS ENUMS (PERMISSÕES E ESTOQUE) ---
+
+enum Recurso {
+  PRODUTO
+  USUARIO
+  PERFIL
+  MOVIMENTACAO
+}
+
+enum Acao {
+  CRIAR
+  LER
+  ATUALIZAR
+  DELETAR
+  ENTRADA_ESTOQUE
+  SAIDA_ESTOQUE
+}
+
+enum TipoMovimentacao {
+  ENTRADA
+  SAIDA
+}
+
+// --- MODELO USER (PRESERVADO + RELACIONAMENTOS) ---
+
 model User {
   id                 Int                @id @default(autoincrement())
   name               String
@@ -30,6 +52,79 @@ model User {
   role               Role               @default(OPERATOR)
   status             Boolean            @default(true)
   registrationSource RegistrationSource @default(SELF)
+  perfilId           Int?
+  ultimoLogin        DateTime?
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
+
+  perfil        Perfil?            @relation(fields: [perfilId], references: [id])
+  excecoes      UsuarioPermissao[]
+  movimentacoes Movimentacao[]
+}
+
+// --- MODELOS DE ACESSO GRANULAR (RBAC) ---
+
+model Permissao {
+  id        Int     @id @default(autoincrement())
+  recurso   Recurso
+  acao      Acao
+  descricao String
+
+  perfis   PerfilPermissao[]
+  usuarios UsuarioPermissao[]
+
+  @@unique([recurso, acao])
+}
+
+model Perfil {
+  id        Int    @id @default(autoincrement())
+  nome      String @unique
+  descricao String
+
+  permissoes PerfilPermissao[]
+  usuarios   User[]
+}
+
+model PerfilPermissao {
+  perfilId    Int
+  permissaoId Int
+
+  perfil    Perfil    @relation(fields: [perfilId], references: [id], onDelete: Cascade)
+  permissao Permissao @relation(fields: [permissaoId], references: [id], onDelete: Cascade)
+
+  @@id([perfilId, permissaoId])
+}
+
+model UsuarioPermissao {
+  userId      Int
+  permissaoId Int
+  concedida   Boolean
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permissao Permissao @relation(fields: [permissaoId], references: [id], onDelete: Cascade)
+
+  @@id([userId, permissaoId])
+}
+
+// --- MODELOS DE CONTROLE DE ESTOQUE ---
+
+model Produto {
+  id              Int    @id @default(autoincrement())
+  nome            String
+  sku             String @unique
+  quantidadeAtual Int    @default(0)
+
+  movimentacoes Movimentacao[]
+}
+
+model Movimentacao {
+  id               Int              @id @default(autoincrement())
+  userId           Int
+  produtoId        Int
+  tipo             TipoMovimentacao
+  quantidade       Int
+  dataMovimentacao DateTime         @default(now())
+
+  user    User    @relation(fields: [userId], references: [id])
+  produto Produto @relation(fields: [produtoId], references: [id])
 }
